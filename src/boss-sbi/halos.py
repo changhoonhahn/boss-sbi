@@ -31,18 +31,29 @@ def Quijote_LHC_HR(i, z=0.5):
             'Halos/latin_hypercube', 'HR_%i' % i)
     
     # look up cosmology of the LHC realization
-    Om, Ol, h, Hz = Quijote_LHC_cosmo(i, z)
+    Om, Ob, h, ns, s8 = Quijote_LHC_cosmo(i)
     
     # read halo catalog 
-    halos = Quijote.Halos(halo_folder, zsnap, Om=Om, Ol=Ol)
+    halos = Quijote.Halos(halo_folder, zsnap, Om=Om, Ob=Ob, h=h, ns=ns, s8=s8, Mnu=0.)
     return halos
 
 
 
-def Quijote_LHC_cosmo(i, z): 
+def Quijote_LHC_cosmo(i): 
     ''' cosmology look up for LHC realization i at redshift z 
 
-
     '''
-    return Om, Ol, h, Hz
+    fcosmo = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dat',
+            'quijote_lhc_cosmo.txt')
+
+    # Omega_m, Omega_l, h, ns, s8
+    cosmo = np.loadtxt(fcosmo, unpack=True, usecols=range(5)) 
+
+    Om = cosmo[0][i]
+    Ob = cosmo[1][i]
+    h  = cosmo[2][i]
+    ns = cosmo[3][i]
+    s8 = cosmo[4][i]
+
+    return Om, Ob, h, ns, s8
 
