@@ -42,7 +42,7 @@ def Halos(halo_folder, z=0.5, Om=None, Ob=None, h=None, ns=None, s8=None, Mnu=0.
     '''
     # if snapshot folder is not specified 
     # then all values have to be specified in kwargs
-    assert all([tt is not None for tt in [Om, Ol, z, h, Hz]]) 
+    assert all([tt is not None for tt in [Om, Ob, z, h]]) 
 
     # redshift snapshot 
     assert z in quijote_zsnap_dict.keys(), 'snapshots are available at z=0, 0.5, 1, 2, 3'
@@ -53,7 +53,7 @@ def Halos(halo_folder, z=0.5, Om=None, Ob=None, h=None, ns=None, s8=None, Mnu=0.
             h=h, 
             Omega0_b=Ob, 
             Omega0_cdm=Om - Ob,
-            m_ncdm=Mnu, 
+            m_ncdm=[None, Mnu][Mnu > 0.], 
             n_s=ns) 
     Ol = 1. - Om 
     Hz = 100.0 * np.sqrt(Om * (1. + z)**3 + Ol) # km/s/(Mpc/h)

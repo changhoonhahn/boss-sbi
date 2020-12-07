@@ -4,6 +4,8 @@ module to inferace with different N-body catalogs incl. Quijote
 
 
 '''
+import os
+import numpy as np 
 from .sims import quijote as Quijote 
 
 
@@ -27,14 +29,14 @@ def Quijote_LHC_HR(i, z=0.5):
         Quijote HR LHC halo catalog  
     '''
     # directory that contains the Quijote LHC HR
-    halo_folder = os.path.join(os.environ('QUJIOTE_DIR'),
+    halo_folder = os.path.join(os.environ['QUIJOTE_DIR'],
             'Halos/latin_hypercube', 'HR_%i' % i)
     
     # look up cosmology of the LHC realization
     Om, Ob, h, ns, s8 = Quijote_LHC_cosmo(i)
     
     # read halo catalog 
-    halos = Quijote.Halos(halo_folder, zsnap, Om=Om, Ob=Ob, h=h, ns=ns, s8=s8, Mnu=0.)
+    halos = Quijote.Halos(halo_folder, z, Om=Om, Ob=Ob, h=h, ns=ns, s8=s8, Mnu=0.)
     return halos
 
 
