@@ -8,7 +8,6 @@ module for reading in Quijote data
 import os
 import numpy as np 
 import nbodykit.lab as NBlab
-from astropy.cosmology import LambdaCDM
 # --- emanu --- 
 from . import readfof 
 from . import readsnap as RS
