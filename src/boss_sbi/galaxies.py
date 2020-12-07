@@ -18,6 +18,18 @@ import nbodykit.lab as NBlab
 from nbodykit.hod import Zheng07Model, Leauthaud11Model, Hearin15Model
 
 
+def thetahod_lowz_ngc(): 
+    ''' bestfit parameters of the lowz catalog from Table 2 of Manera et al.(2015)
+    '''
+    p_hod = {
+            'logMmin': 13.20, 
+            'sigma_logM': 0.62, 
+            'logM0': 13.24, 
+            'logM1': 14.32, 
+            'alpha': 0.9
+            }
+    return p_hod 
+
 
 def hodGalaxies(halos, p_hod, seed=None): 
     ''' populate given halo catalog (halos) with galaxies based on HOD model
