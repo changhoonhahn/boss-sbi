@@ -30,7 +30,7 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
     
     Return
     ------
-    pk_moms: binned statistics object containing k-bins and values of pk moments
+    pk_moms_arr: an array containing values of k and power spectrum moments
 
     '''
 
@@ -41,6 +41,7 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
     delta_mesh = FieldMesh(galaxies.to_mesh(Nmesh=Ngrid, BoxSize=Lbox,
         window='cic', interlaced=False, compensated=False).compute()-1)
 
+    #compute the power spectrum moments using nbodykit 
     if poles is None:
       poles = [0,2,4]
       pk_moms = FFTPower(first=delta_mesh,
@@ -52,14 +53,14 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
                           Nmu=5,
                           los=los)
 
-# if we wanted to return an array of k and pkl values, we can return PkMoms_arr
-#     for ell in pk_moms.attrs['poles']:
-#             mydtype = [('k', 'f8'), ('P', 'f8')]
-#             PkMoms_arr = np.empty(shape=pk_moms.poles['k'].shape, dtype=mydtype)
-#             PkMoms_arr['k'] = pk_moms.poles['k']
-#             PkMoms_arr['P'] = pk_moms.poles['power_%d'%ell].real
+    # if we wanted to return an array of k and pkl values, we can return PkMoms_arr
+    for ell in pk_moms.attrs['poles']:
+            mydtype = [('k', 'f8'), ('P', 'f8')]
+            PkMoms_arr = np.empty(shape=pk_moms.poles['k'].shape, dtype=mydtype)
+            PkMoms_arr['k'] = pk_moms.poles['k']
+            PkMoms_arr['P'] = pk_moms.poles['power_%d'%ell].real
             
-    return pk_moms
+    return pk_moms_arr
 
 
 def B0k(galaxies, Lbox=1000., Ngrid=360, step=3, Ncut=3, Nmax=40, fft='pyfftw'): 
@@ -139,7 +140,7 @@ def Pk_skew(galaxies, Lbox=1000., Ngrid=360, Rsmooth):
     
     Return
     ------
-    SkewSpec_arr : np array containing the values of k and skew-spectra
+    SkewSpec_arr: an array containing the values of k and the 14 skew spectra
     '''
    
     # Given an nbodykit CatalogSource object `cat' (e.g. containing a halo/galaxy
@@ -170,8 +171,7 @@ def Pk_skew(galaxies, Lbox=1000., Ngrid=360, Rsmooth):
             third_mesh=delta_mesh, power_kwargs=power_kwargs,
             store_key='default_key')
    
-    ## AM: We can just return the Pskew object, which has the wavenumber and values of skew-spectra as its attributes
-    ## otherwise, here is how we can return an array containing the values. What is the prefered format of the output?
+    # if we wanted to return an array of k and skew_spec values, we can return SkewSpec_arr
     mydtype = [('k', 'f8')]
     for ell in skew_spec.Pskew['default_key'].attrs['poles']:
         for skew_spec in skew_spectra:
