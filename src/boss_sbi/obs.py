@@ -85,3 +85,53 @@ def Mk(galaxy_pos, Filter, R, p, ds, BoxSize, grid, MAS, threads):
     Pk = PKL.Pk(delta_m, BoxSize, axis, MAS, threads)
     return Pk
 
+
+def Pk_skew(galaxies,Ngrid,Lbox,Rsmooth):
+    ''' Measure the redshift-space skew spectra using the `skewspec` package
+
+    Parameters
+    ----------
+    galaxies : GalaxyCatalog object
+    
+    Return
+    ------
+    SkewSpec_arr : np array contaningthe values of k and skew-spectra
+    '''
+    ## AM: What is the format of input galaxy catalogue? I am assuming it is compatible with nbodykit CataligueSource object
+    
+    # Given an nbodykit CatalogSource object `cat' (e.g. containing a halo/galaxy
+    # catalog), paint the overdensity delta on a 3D mesh using nbodykit.
+    delta_mesh = FieldMesh(galaxies.to_mesh(Nmesh=Ngrid, BoxSize=Lbox,
+        window='cic', interlaced=False, compensated=False).compute()-1)
+
+    # Make a copy of the density and apply Gaussian smoothing
+    delta_mesh_smoothed = FieldMesh(delta_mesh.compute(mode='real'))
+    delta_mesh_smoothed = smoothing.GaussianSmoother(Rsmooth).apply_smoothing(
+    delta_mesh_smoothed)
+
+    # Compute skew spectra
+    #Set line of sight direction
+    LOS = numpy.array([0,0,1])
+   
+    # Get list of the 14 quadratic fields S1-S14 derived from the tree-
+    # level galaxy bispectrum in redshift space, see arXiv:2010.14267.
+    # If redshift_space_spectra is False, get the 3 skew-spectra derived 
+    # from the galaxy bispectrum in real space.
+    skew_spectra = SkewSpectrum.get_list_of_standard_skew_spectra(LOS=LOS, redshift_space_spectra=True)
+    
+    # Compute skew spectrum and store in skew_spec.Pskew
+    for skew_spec in skew_spectra:
+        skew_spec.compute_from_mesh(mesh=delta_mesh_smoothed,second_mesh=delta_mesh_smoothed,third_mesh=delta_mesh)
+   
+    ## AM: We can just return the Pskew object, which has the wavenumber and values of skew-spectra as its attribute
+    ## otherwise, here is how we can return an array containing the values. What is the prefered format of the output?
+    mydtype = [('k', 'f8')]
+    for ell in skew_spec.Pskew['default_key'].attrs['poles']:
+        for skew_spec in skew_spectra:
+            mydtype.append((skew_spec.name, 'f8'))
+            arr = np.empty(shape=skew_spec.Pskew['default_key'].poles['k'].shape, dtype=mydtype)
+            SkewSpec_arr['k'] = skew_spec.Pskew['default_key'].poles['k']
+            for skew_spec in skew_spectra:
+                SkewSpec_arr[skew_spec.name] = skew_spec.Pskew['default_key'].poles['power_%d'%ell].real
+
+   return SkewSpec_arr
