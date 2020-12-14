@@ -37,6 +37,9 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
     dk = 2.0 * np.pi / boxsize * k_bin_width
     kmin = 2.0 * np.pi / boxsize / 2.0
 
+    # Set line of sight direction
+    LOS = numpy.array([0,0,1])
+    
     # paint galaxies to mesh
     delta_mesh = FieldMesh(galaxies.to_mesh(Nmesh=Ngrid, BoxSize=Lbox,
         window='cic', interlaced=False, compensated=False).compute()-1)
@@ -45,13 +48,13 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
     if poles is None:
       poles = [0,2,4]
       pk_moms = FFTPower(first=delta_mesh,
-                          second=second,
-                          mode=mode,
+                          second=None,
+                          mode='2d',
                           dk=dk,
                           kmin=kmin,
                           poles=poles,
                           Nmu=5,
-                          los=los)
+                          los=LOS)
 
     # if we wanted to return an array of k and pkl values, we can return PkMoms_arr
     for ell in pk_moms.attrs['poles']:
@@ -60,7 +63,7 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
             PkMoms_arr['k'] = pk_moms.poles['k']
             PkMoms_arr['P'] = pk_moms.poles['power_%d'%ell].real
             
-    return pk_moms_arr
+    return PkMoms_arr
 
 
 def B0k(galaxies, Lbox=1000., Ngrid=360, step=3, Ncut=3, Nmax=40, fft='pyfftw'): 
