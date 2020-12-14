@@ -7,6 +7,7 @@ different methods for measuring observables here.
 '''
 from pyspectrum import pyspectrum as pySpec
 
+from nbodykit.algorithms.fftpower import FFTPower
 from nbodykit.source.mesh.field import FieldMesh
 from skewspec import smoothing
 from skewspec.skew_spectrum import SkewSpectrum
@@ -18,9 +19,47 @@ import MAS_library as MASL
 import smoothing_library as SL
 ############################################################
 
-def Plk():
+def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
+    ''' Measure the powerspectrum multipoles using the nbodykit package
+   
+
+    Parameters
+    ----------
+    galaxies : GalaxyCatalog object
+
+    
+    Return
+    ------
+    pk_moms: binned statistics object containing k-bins and values of pk moments
+
     '''
-    '''
+
+    dk = 2.0 * np.pi / boxsize * k_bin_width
+    kmin = 2.0 * np.pi / boxsize / 2.0
+
+    # paint galaxies to mesh
+    delta_mesh = FieldMesh(galaxies.to_mesh(Nmesh=Ngrid, BoxSize=Lbox,
+        window='cic', interlaced=False, compensated=False).compute()-1)
+
+    if poles is None:
+      poles = [0,2,4]
+      pk_moms = FFTPower(first=delta_mesh,
+                          second=second,
+                          mode=mode,
+                          dk=dk,
+                          kmin=kmin,
+                          poles=poles,
+                          Nmu=5,
+                          los=los)
+
+# if we wanted to return an array of k and pkl values, we can return PkMoms_arr
+#     for ell in pk_moms.attrs['poles']:
+#             mydtype = [('k', 'f8'), ('P', 'f8')]
+#             PkMoms_arr = np.empty(shape=pk_moms.poles['k'].shape, dtype=mydtype)
+#             PkMoms_arr['k'] = pk_moms.poles['k']
+#             PkMoms_arr['P'] = pk_moms.poles['power_%d'%ell].real
+            
+    return pk_moms
 
 
 def B0k(galaxies, Lbox=1000., Ngrid=360, step=3, Ncut=3, Nmax=40, fft='pyfftw'): 
@@ -91,7 +130,7 @@ def Mk(galaxy_pos, Filter, R, p, ds, BoxSize, grid, MAS, threads):
     return Pk
 
 
-def Pk_skew(galaxies,Ngrid,Lbox,Rsmooth):
+def Pk_skew(galaxies, Lbox=1000., Ngrid=360, Rsmooth):
     ''' Measure the redshift-space skew spectra using the `skewspec` package
 
     Parameters
