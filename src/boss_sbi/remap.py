@@ -1,83 +1,37 @@
 import sys
 from math import *
+import numpy as N
 
 verbose = False
 
+class vec3(N.ndarray):
+    """A simple 3D vector class, using Numpy for fast array operations."""
+    def __new__(cls, *args):
+        a = N.ndarray.__new__(vec3, (3,), float)
+        if len(args) == 0:
+            a[0] = a[1] = a[2] = 0
+        elif len(args) == 1:
+            v = args[0]
+            a[0] = v[0]
+            a[1] = v[1]
+            a[2] = v[2]
+        elif len(args) == 3:
+            a[0] = args[0]
+            a[1] = args[1]
+            a[2] = args[2]
+        else:
+            raise RuntimeError
+        return a
 
-try:
-    # Use fast vec3 implementation if Numpy is available
-    import numpy as N
-    class vec3(N.ndarray):
-        """A simple 3D vector class, using Numpy for fast array operations."""
-        def __new__(cls, *args):
-            a = N.ndarray.__new__(vec3, (3,), float)
-            if len(args) == 0:
-                a[0] = a[1] = a[2] = 0
-            elif len(args) == 1:
-                v = args[0]
-                a[0] = v[0]
-                a[1] = v[1]
-                a[2] = v[2]
-            elif len(args) == 3:
-                a[0] = args[0]
-                a[1] = args[1]
-                a[2] = args[2]
-            else:
-                raise RuntimeError
-            return a
-
-        def _getx(self): return self[0]
-        def _gety(self): return self[1]
-        def _getz(self): return self[2]
-        def _setx(self, value): self[0] = value
-        def _sety(self, value): self[1] = value
-        def _setz(self, value): self[2] = value
-        x = property(_getx, _setx)
-        y = property(_gety, _sety)
-        z = property(_getz, _setz)
-
-except:
-    # Fall back to non-Numpy implementation
-    class vec3:
-        """A simple 3D vector class."""
-        def __init__(self, x, y=None, z=None, dtype=float):
-            if y is None and z is None:
-                self.x = dtype(x[0])
-                self.y = dtype(x[1])
-                self.z = dtype(x[2])
-            else:
-                self.x = dtype(x)
-                self.y = dtype(y)
-                self.z = dtype(z)
-
-        def __pos__(self):
-            return self
-
-        def __neg__(self):
-            return vec3(-self.x, -self.y, -self.z)
-
-        def __add__(self, other):
-            return vec3(self.x + other.x, self.y + other.y, self.z + other.z)
-
-        def __sub__(self, other):
-            return vec3(self.x - other.x, self.y - other.y, self.z - other.z)
-
-        def __rmul__(self, scalar):
-            return vec3(self.x*scalar, self.y*scalar, self.z*scalar)
-
-        def __mul__(self, scalar):
-            return vec3(self.x*scalar, self.y*scalar, self.z*scalar)
-
-        def __div__(self, scalar):
-            return vec3(self.x/scalar, self.y/scalar, self.z/scalar)
-
-        def __repr__(self):
-            return "(%g, %g, %g)" % (self.x, self.y, self.z)
-
-        def __getitem__(self, i):
-            if   i == 0: return self.x
-            elif i == 1: return self.y
-            elif i == 2: return self.z
+    def _getx(self): return self[0]
+    def _gety(self): return self[1]
+    def _getz(self): return self[2]
+    def _setx(self, value): self[0] = value
+    def _sety(self, value): self[1] = value
+    def _setz(self, value): self[2] = value
+    x = property(_getx, _setx)
+    y = property(_gety, _sety)
+    z = property(_getz, _setz)
 
 
 def dot(u, v):

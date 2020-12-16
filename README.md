@@ -35,6 +35,12 @@ Once you've added the line, don't forget to run
 source ~/.bashrc
 ```
 
+## Dependencies
+The `boss_sbi` package has the following dependencies: 
+- nbodykit 
+- pymangle
+
+
 ## Generating an HOD catalog for HR Quijote LHC 
 ```python
 import numpy as np 
