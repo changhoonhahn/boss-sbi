@@ -60,7 +60,6 @@ def hodGalaxies(halos, p_hod, seed=None):
     return hod 
 
 
-
 def BOSSGalaxies(sample='cmass-north'): 
     ''' Read in BOSS galaxy catalog. Data can be downloaded from 
     https://data.sdss.org/sas/dr12/boss/lss/

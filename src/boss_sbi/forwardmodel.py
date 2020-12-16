@@ -8,12 +8,19 @@ mksample
 '''
 import os 
 import pymangle 
+from remap import Cuboid 
 
 
-
-def BOSS(galaxies, sample='cmass-north'): 
+def BOSS(galaxies, sample='lowz-south'): 
     ''' Forward model the BOSS survey given a simulated galaxy catalog 
     '''
+    assert samples == 'lowz-south', 'only LOWZ SGC has been implemented' 
+    # use BoxRemap to transform the volume (https://arxiv.org/abs/1003.3178)
+    C = Cuboid(u1=(1,1,0), u2=(0,1,0), u3=(0,0,1))
+    
+    #xyz = galaxies['Position'] 
+
+
     # apply redshift space distortion 
 
     # compute redshifts 
