@@ -13,7 +13,9 @@ from boss_sbi import forwardmodel as FM
 halos = Quijote_LHC_HR(1, z=0.5)
 
 # get LOWZ HOD parameters
-theta_hod = Galaxies.thetahod_lowz_ngc()
+theta_hod = Galaxies.thetahod_lowz_sgc()
+#theta_hod['logMmin'] = 13.
+#theta_hod['logM1'] = 14.
 
 # apply HOD 
 gals = Galaxies.hodGalaxies(halos, theta_hod, seed=0) 
@@ -59,8 +61,26 @@ ra, dec, z = NBlab.transform.CartesianToSky(
 print(np.array(ra))
 print(np.array(dec))
 print(np.array(z))
+    
+gals['RA']  = ra
+gals['DEC'] = dec 
+gals['Z']   = z 
 
 
 boss_poly = FM.BOSS_mask('lowz-south') 
 in_footprint = FM.BOSS_angular(ra, dec, mask=boss_poly)
 print('%i of %i in footprint' % (np.sum(in_footprint), len(in_footprint)))
+
+radial_select = FM.BOSS_radial(np.array(z)[in_footprint], seed=0)
+print('%i of %i in radial' % (np.sum(radial_select), len(in_footprint)))
+
+rad_sel = np.zeros(len(in_footprint)).astype(bool)
+rad_sel[np.arange(len(in_footprint))[in_footprint][radial_select]] = True 
+
+print('%i of %i' % (np.sum(in_footprint & rad_sel), len(in_footprint)))
+
+select_gals = gals[in_footprint & rad_sel]
+print(select_gals['RA']) 
+
+
+
