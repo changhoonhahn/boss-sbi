@@ -31,6 +31,25 @@ def thetahod_lowz_ngc():
     return p_hod 
 
 
+def thetahod_lowz_sgc(): 
+    ''' bestfit parameters of the lowz catalog from Table2 of Marnera et al.(2015) 
+
+    Notes
+    -----
+    * Manera+(2015) actually uses a redshift dependent HOD. The HOD that's
+        currently implemented is primarily for the 0.2 < z < 0.35 population,
+        which has nbar~3x10^-4 h^3/Mpc^3
+    '''
+    p_hod = {
+            'logMmin': 13.14, 
+            'sigma_logM':0.55,
+            'logM0': 13.43, 
+            'logM1': 14.58, 
+            'alpha': 0.93 
+            }
+    return p_hod 
+
+
 def hodGalaxies(halos, p_hod, seed=None): 
     ''' populate given halo catalog (halos) with galaxies based on HOD model
     with p_hod parameters. Currently only supports the Zheng+(2007) model.
@@ -58,7 +77,6 @@ def hodGalaxies(halos, p_hod, seed=None):
     # recalculate RSD velocity offset using stored rsd_factor attr from emanu.sims.data.hqHalos
     hod['VelocityOffset'] = hod['Velocity'] * hod.attrs['rsd_factor'] 
     return hod 
-
 
 
 def BOSSGalaxies(sample='cmass-north'): 
