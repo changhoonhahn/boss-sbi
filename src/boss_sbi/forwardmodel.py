@@ -15,8 +15,8 @@ import nbodykit.lab as NBlab
 def BOSS(galaxies, sample='lowz-south', seed=0): 
     ''' Forward model the BOSS survey given a simulated galaxy catalog 
     '''
-    assert samples == 'lowz-south', 'only LOWZ SGC has been implemented' 
-    assert np.all(galaxies['BoxSize'] == 1000.), 'only supported for 1Gpc/h cubic box'
+    assert sample == 'lowz-south', 'only LOWZ SGC has been implemented' 
+    assert np.all(galaxies.attrs['BoxSize'] == 1000.), 'only supported for 1Gpc/h cubic box'
 
     # use BoxRemap to transform the volume (https://arxiv.org/abs/1003.3178)
     # at the moment this takes about ~5sec --- but it can definitely be sped up.
@@ -53,7 +53,7 @@ def BOSS(galaxies, sample='lowz-south', seed=0):
     
     select = in_footprint & in_radial_select
 
-    return gals[select]
+    return galaxies[select]
 
 
 def BOSS_mask(sample): 
@@ -109,4 +109,4 @@ def BOSS_radial(z, sample='lowz-south', seed=0):
     i_z = np.digitize(z, zedges)
     downsample = (np.random.rand(len(z)) < fdown_z[i_z])
 
-    return zlim & downsample 
+    return zlim #& downsample 

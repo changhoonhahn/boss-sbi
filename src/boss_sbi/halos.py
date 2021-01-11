@@ -40,7 +40,6 @@ def Quijote_LHC_HR(i, z=0.5):
     return halos
 
 
-
 def Quijote_LHC_cosmo(i): 
     ''' cosmology look up for LHC realization i at redshift z 
 

@@ -4,83 +4,70 @@
 test boss_sbi.galaxies
 
 '''
+import os, time
 import numpy as np 
 from boss_sbi.halos import Quijote_LHC_HR
 from boss_sbi import galaxies as Galaxies
 from boss_sbi import forwardmodel as FM 
+# --- plotting --- 
+import matplotlib as mpl
+mpl.use('pdf')
+import matplotlib.pyplot as plt
+mpl.rcParams['text.usetex'] = True
+mpl.rcParams['font.family'] = 'serif'
+mpl.rcParams['axes.linewidth'] = 1.5
+mpl.rcParams['axes.xmargin'] = 1
+mpl.rcParams['xtick.labelsize'] = 'x-large'
+mpl.rcParams['xtick.major.size'] = 5
+mpl.rcParams['xtick.major.width'] = 1.5
+mpl.rcParams['ytick.labelsize'] = 'x-large'
+mpl.rcParams['ytick.major.size'] = 5
+mpl.rcParams['ytick.major.width'] = 1.5
+mpl.rcParams['legend.frameon'] = False
+
 
 # read in halo catalog 
+t0 = time.time() 
 halos = Quijote_LHC_HR(1, z=0.5)
+print('halo readin takes %f sec' % ((time.time() - t0)))
 
 # get LOWZ HOD parameters
 theta_hod = Galaxies.thetahod_lowz_sgc()
-#theta_hod['logMmin'] = 13.
-#theta_hod['logM1'] = 14.
 
 # apply HOD 
-gals = Galaxies.hodGalaxies(halos, theta_hod, seed=0) 
-
-from boss_sbi.remap import Cuboid 
-xyz = np.array(gals['Position']) / 1000.
-
-C = Cuboid(u1=(1,1,0), u2=(0,1,0), u3=(0,0,1))
-
-import time
-
 t0 = time.time() 
+hod = Galaxies.hodGalaxies(halos, theta_hod, seed=0) 
+print('HOD takes %f sec' % ((time.time() - t0)))
 
-xyz_t = np.empty(xyz.shape)
-for i in range(xyz.shape[0]): 
-    xyz_t[i,:] = C.Transform(xyz[i,0], xyz[i,1], xyz[i,2]) # transformed
-print(xyz_t) 
-print('%f sec' % ((time.time() - t0)))
-xyz_t *= 1000.
-print('%.1f < x < %.1f' % (xyz_t[:,0].min(), xyz_t[:,0].max()))
-print('%.1f < y < %.1f' % (xyz_t[:,1].min(), xyz_t[:,1].max()))
-print('%.1f < z < %.1f' % (xyz_t[:,2].min(), xyz_t[:,2].max()))
-print()
+# apply forward model 
+t0 = time.time() 
+gals = FM.BOSS(hod, sample='lowz-south', seed=0)
+print('forward model takes %f sec' % ((time.time() - t0)))
 
-xyz_t = np.dot(xyz_t, np.array([[0, -1, 0], [1, 0, 0,], [0, 0, 1]]))
+# read BOSS sample for comparison 
+boss = Galaxies.BOSSGalaxies(sample='lowz-south') 
+zlim = (np.array(boss['Z']) > 0.2) & (np.array(boss['Z']) < 0.37)
 
-print('%.1f < x < %.1f' % (xyz_t[:,0].min(), xyz_t[:,0].max()))
-print('%.1f < y < %.1f' % (xyz_t[:,1].min(), xyz_t[:,1].max()))
-print('%.1f < z < %.1f' % (xyz_t[:,2].min(), xyz_t[:,2].max()))
+# compare footprint
+fig = plt.figure(figsize=(10,5))
+sub = fig.add_subplot(111)
+sub.scatter(np.array(gals['RA']), np.array(gals['DEC']), c='C0', s=1, rasterized=True, label='Forward Model') 
+sub.scatter(np.array(gals['RA'])-360, np.array(gals['DEC']), c='C0', s=1, rasterized=True) 
+sub.scatter(np.array(boss['RA']), np.array(boss['DEC']), c='k', s=1, rasterized=True, label='LOWZ') 
+sub.scatter(np.array(boss['RA'])-360., np.array(boss['DEC']), c='k', s=1, rasterized=True) 
+sub.legend(loc='upper right', fontsize=15, handletextpad=0, markerscale=10)
+sub.set_xlabel('RA', fontsize=25) 
+sub.set_xlim(-50, 70) 
+sub.set_ylabel('Dec', fontsize=25) 
+fig.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), '_fm_footprint.png'), bbox_inches='tight') 
 
-xyz_t += np.array([334.45, 738.4, -351.1])[None,:] # translate 
-print('%.1f < x < %.1f' % (xyz_t[:,0].min(), xyz_t[:,0].max()))
-print('%.1f < y < %.1f' % (xyz_t[:,1].min(), xyz_t[:,1].max()))
-print('%.1f < z < %.1f' % (xyz_t[:,2].min(), xyz_t[:,2].max()))
-
-import nbodykit.lab as NBlab
-ra, dec, z = NBlab.transform.CartesianToSky(
-        xyz_t, 
-        gals.cosmo,
-        velocity=gals['Velocity'], 
-        observer=[0,0,0])
-
-print(np.array(ra))
-print(np.array(dec))
-print(np.array(z))
-    
-gals['RA']  = ra
-gals['DEC'] = dec 
-gals['Z']   = z 
-
-
-boss_poly = FM.BOSS_mask('lowz-south') 
-in_footprint = FM.BOSS_angular(ra, dec, mask=boss_poly)
-print('%i of %i in footprint' % (np.sum(in_footprint), len(in_footprint)))
-
-radial_select = FM.BOSS_radial(np.array(z)[in_footprint], seed=0)
-print('%i of %i in radial' % (np.sum(radial_select), len(in_footprint)))
-
-rad_sel = np.zeros(len(in_footprint)).astype(bool)
-rad_sel[np.arange(len(in_footprint))[in_footprint][radial_select]] = True 
-
-print('%i of %i' % (np.sum(in_footprint & rad_sel), len(in_footprint)))
-
-select_gals = gals[in_footprint & rad_sel]
-print(select_gals['RA']) 
-
-
-
+# compare n(z) 
+fig = plt.figure(figsize=(5,5))
+sub = fig.add_subplot(111)
+_ = sub.hist(np.array(boss['Z'])[zlim], color='k', histtype='step', density=True)
+_ = sub.hist(np.array(gals['Z']), color='C0', histtype='step', density=True)
+#sub.legend(loc='upper right', fontsize=15, handletextpad=0, markerscale=10)
+sub.set_xlabel('redshift', fontsize=25) 
+sub.set_xlim(0.15, 0.4) 
+sub.set_ylabel('noramlized $n(z)$', fontsize=25) 
+fig.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), '_fm_nz.png'), bbox_inches='tight') 

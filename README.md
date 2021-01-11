@@ -56,5 +56,14 @@ theta_hod = Galaxies.thetahod_lowz_ngc()
 # apply HOD 
 gals = Galaxies.hodGalaxies(halos, theta_hod, seed=0) 
 print(np.array(gals['Position']))
+```
 
+## some tips for running on tiger
+
+```bash
+# load anaconda 
+module load anaconda3
+
+# create conda environment 
+conda create -n name_of_your_env python=3.7 
 ```
