@@ -12,6 +12,7 @@ References
 
 
 '''
+import os 
 import numpy as np 
 # --- nbodykit --- 
 import nbodykit.lab as NBlab
@@ -79,7 +80,7 @@ def hodGalaxies(halos, p_hod, seed=None):
     return hod 
 
 
-def BOSSGalaxies(sample='cmass-north'): 
+def BOSSGalaxies(sample='lowz-south'): 
     ''' Read in BOSS galaxy catalog. Data can be downloaded from 
     https://data.sdss.org/sas/dr12/boss/lss/
     
@@ -99,6 +100,10 @@ def BOSSGalaxies(sample='cmass-north'):
     if sample == 'cmass-north': 
         fgal = os.path.join(os.environ('BOSSSBI_DIR'), 'boss',
                 'galaxy_DR12v5_CMASS_North.fits.gz') 
+    elif sample == 'lowz-south': 
+        fgal = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), 'dat',
+                'galaxy_DR12v5_LOWZ_South.fits.gz')
     else: 
         raise NotImplementedError
 
