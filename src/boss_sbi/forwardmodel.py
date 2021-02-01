@@ -73,7 +73,8 @@ def BOSS_angular(ra, dec, mask=None):
     ''' Given RA and Dec, check whether the galaxies are within the angular
     mask of BOSS
     '''
-    inpoly = mask.contains(ra, dec)
+    w = mask.weight(ra, dec)
+    inpoly = (w > 0.) 
     return inpoly 
 
 
