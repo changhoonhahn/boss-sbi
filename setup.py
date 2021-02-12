@@ -22,7 +22,9 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = [
         "numpy>1.18",
         "h5py>=2.10",
-        "matplotlib"
+        "matplotlib", 
+        "pymangle", 
+        "pydl" 
 ]
 # END PROJECT SPECIFIC
 

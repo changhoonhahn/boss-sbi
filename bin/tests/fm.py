@@ -41,7 +41,7 @@ print('HOD takes %f sec' % ((time.time() - t0)))
 
 # apply forward model 
 t0 = time.time() 
-gals = FM.BOSS(hod, sample='lowz-south', seed=0)
+gals = FM.BOSS(hod, sample='lowz-south', seed=0, silent=False)
 print('forward model takes %f sec' % ((time.time() - t0)))
 
 # read BOSS sample for comparison 
