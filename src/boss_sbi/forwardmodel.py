@@ -10,15 +10,12 @@ import os, time
 import numpy as np 
 from .remap import Cuboid 
 import nbodykit.lab as NBlab
-from astropy.stats import scott_bin_width
-from scipy.interpolate import InterpolatedUnivariateSpline
-
 
 import pymangle 
 from pydl.pydlutils.spheregroup import spherematch
 
 
-def BOSS(galaxies, sample='lowz-south', seed=0, fiber_collision=True, silent=True):
+def BOSS(galaxies, sample='lowz-south', seed=0, veto=True, fiber_collision=True, silent=True):
     ''' Forward model the BOSS survey given a simulated galaxy catalog 
     '''
     assert sample == 'lowz-south', 'only LOWZ SGC has been implemented' 
@@ -55,9 +52,11 @@ def BOSS(galaxies, sample='lowz-south', seed=0, fiber_collision=True, silent=Tru
     if not silent: print('..applying angular mask takes %.f sec' % (time.time() - t0))
 
     # veto mask 
-    if not silent: t0 = time.time() 
-    in_veto = BOSS_veto(ra, dec) 
-    if not silent: print('..applying veto takes %.f sec' % (time.time() - t0))
+    if veto: 
+        if not silent: t0 = time.time() 
+        in_veto = BOSS_veto(ra, dec) 
+        if not silent: print('..applying veto takes %.f sec' % (time.time() - t0))
+        in_footprint = in_footprint & ~in_veto
     
     # radial mask
     if sample == 'lowz-south': 
@@ -72,7 +71,7 @@ def BOSS(galaxies, sample='lowz-south', seed=0, fiber_collision=True, silent=Tru
     #in_radial_select[np.arange(len(ra))[in_footprint][in_nz]] = True
     #if not silent: print('..applying raidal takes %.f sec' % (time.time() - t0))
 
-    select = in_footprint & ~in_veto & in_radial_select
+    select = in_footprint & in_radial_select
 
     if fiber_collision: # apply fiber collisions
         if not silent: t0 = time.time() 
@@ -86,28 +85,14 @@ def BOSS(galaxies, sample='lowz-south', seed=0, fiber_collision=True, silent=Tru
         fibcoll = np.zeros(len(ra)).astype(bool) 
 
     galaxies = galaxies[select & ~fibcoll]
-
-    # calculate nbar(z) for each galaxy 
-    _, edges = scott_bin_width(galaxies['Z'], return_bins=True)
-
-    dig = np.searchsorted(edges, galaxies['Z'], "right")
-    N = np.bincount(dig, minlength=len(edges)+1)[1:-1]
-
-    R_hi = galaxies.cosmo.comoving_distance(edges[1:]) # Mpc/h
-    R_lo = galaxies.cosmo.comoving_distance(edges[:-1]) # Mpc/h
-
+    
     if sample == 'lowz-south': # fraction of the sky 
         # 2.501263E+03 deg^2
         fsky = (2.501263e3) / (360.**2 / np.pi)
     else: 
         raise NotImplementedError
     if not silent: print("..footprint covers %.3f of sky" % fsky)
-
-    dV = (4./3.) * np.pi * (R_hi**3 - R_lo**3) * fsky
-
-    nofz = InterpolatedUnivariateSpline(0.5*(edges[1:] + edges[:-1]), N/dV, ext='const')
-    
-    galaxies['NZ'] = nofz(galaxies['Z'])
+    galaxies.attrs['fsky'] = fsky 
     return galaxies
 
 
