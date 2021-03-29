@@ -189,3 +189,54 @@ def BOSS_radial(z, sample='lowz-south', seed=0):
     downsample = (np.random.rand(len(z)) < fdown_z[i_z])
 
     return zlim #& downsample 
+
+
+def BOSS_randoms(boss_gals, sample='lowz-south', veto=True): 
+    ''' given forward modeled galaxy catalog (output from the BOSS function) construct 
+    accompanying random catalog. 
+
+    Parameters 
+    ----------
+    boss_gals : catalog object
+        catalog output from `forwardmodel.BOSS` function 
+    sample : string
+        specify which BOSS sample. currently only supports 'lowz-south'
+    veto : boolean
+        if True, veto mask is applied on the random 
+
+    Returns
+    -------
+    nbodykit.ArrayCatalog with RA, DEC, and Z of random catalog
+    '''
+    from astropy.stats import scott_bin_width
+    if sample not in ['lowz-south']: 
+        raise NotImplementedError('%s not yet supported' % sample)
+
+    if not veto: # without veto mask 
+        frand = os.path.join(os.environ['QUIJOTE_DIR'], 'chang', 
+                'random_DR12v5_LOWZ_South.hdf5')
+    else: # with veto mask
+        frand = os.path.join(os.environ['QUIJOTE_DIR'], 'chang', 
+                'random_DR12v5_LOWZ_South.veto.hdf5')
+    
+    # read RA and Dec values 
+    rand = h5py.File(frand, 'r') 
+    rand_ra     = rand['ra'][...]
+    rand_dec    = rand['dec'][...]
+
+    # generate redshifts that match input galaxy redshift distribution
+    w, bins = scott_bin_width(boss_gals['Z'], return_bins=True)
+    hist, edges = np.histogram(boss_gals['Z'], bins=bins) 
+    cutoffs = np.cumsum(hist) / np.sum(hist)
+
+    prng = np.random.uniform(size=len(rand_ra))
+    rand_z = edges[:-1][cutoffs.searchsorted(prng)] + w * np.random.uniform(size=len(rand_ra))
+
+    # radial mask
+    if sample == 'lowz-south': 
+        zmin, zmax = 0.2, 0.37 
+        in_radial_select = (rand_z > zmin) & (rand_z < zmax) 
+    else: 
+        raise NotImplementedError
+        
+    return NBlab.ArrayCatalog({'RA': rand_ra[in_radial_select], 'DEC': rand_dec[in_radial_select], 'Z': rand_z[in_radial_select]})
