@@ -48,7 +48,7 @@ def Halos(halo_folder, z=0.5, Om=None, Ob=None, h=None, ns=None, s8=None, Mnu=0.
     assert z in quijote_zsnap_dict.keys(), 'snapshots are available at z=0, 0.5, 1, 2, 3'
     snapnum = quijote_zsnap_dict[z]
 
-    # this cosmology is not used for anything. but it's included for nbodykit 
+    # define cosmology; caution: we don't match sigma8 here 
     cosmo = NBlab.cosmology.Planck15.clone(
             h=h, 
             Omega0_b=Ob, 
