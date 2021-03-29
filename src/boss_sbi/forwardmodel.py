@@ -191,6 +191,33 @@ def BOSS_radial(z, sample='lowz-south', seed=0):
     return zlim #& downsample 
 
 
+def BOSS_area(sample='lowz-south', veto=True): 
+    ''' get footprint area of BOSS sample
+    '''
+    if sample == 'lowz-south': 
+        f_poly = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                'dat', 'mask_DR12v5_LOWZ_South.ply') 
+    else: 
+        raise NotImplementedError
+    boss_poly = pymangle.Mangle(f_poly) 
+
+    area = boss_poly.area # deg^2
+    
+    if veto: # remove veto mask areas 
+        raise ValueError("doesn't work yet!")
+        fvetos = [
+                'badfield_mask_postprocess_pixs8.ply', 
+                'badfield_mask_unphot_seeing_extinction_pixs8_dr12.ply',
+                'allsky_bright_star_mask_pix.ply',
+                'bright_object_mask_rykoff_pix.ply', 
+                'centerpost_mask_dr12.ply', 
+                'collision_priority_mask_dr12.ply']
+        for fveto in fvetos: 
+            veto = pymangle.Mangle(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dat', fveto))
+            area -= veto.area 
+    return area 
+
+
 def BOSS_randoms(boss_gals, sample='lowz-south', veto=True): 
     ''' given forward modeled galaxy catalog (output from the BOSS function) construct 
     accompanying random catalog. 
