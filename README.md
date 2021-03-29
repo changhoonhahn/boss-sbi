@@ -9,7 +9,10 @@ Details and resources on the original BOSS analysis: [https://sites.google.com/v
 
 
 ## Installation 
-To install the `boss_sbi` package
+First [set up a new anaconda environment](#setting-up-a-conda-environment) to
+avoid any package conflicts. 
+
+Activate the conda environment and then install the `boss_sbi` package
 ```bash
 # first clone the repo
 git clone https://github.com/changhoonhahn/boss_sbi.git
@@ -35,10 +38,42 @@ Once you've added the line, don't forget to run
 source ~/.bashrc
 ```
 
-## Dependencies
-The `boss_sbi` package has the following dependencies: 
-- nbodykit 
-- pymangle
+### Setting Up a Conda Environment 
+#### On `tiger` 
+If you're on Princeton's `tiger` cluster, you don't have to install anaconda.
+You can load it using 
+```bash
+module load anaconda 
+```
+
+Afterwards you can create a new conda environment using
+```bash
+conda create -n ENV_NAME_HERE python=3.7 ipython 
+```
+and following the instructions. 
+
+
+To activate the conda environment you created
+```
+conda activate ENV_NAME_HERE 
+```
+
+Later, if you want to exist the conda environemtn
+```bash
+conda deactivate 
+```
+
+
+### Dependencies
+The `boss_sbi` package requires the following python pacakges: 
+- [nbodykit](https://nbodykit.readthedocs.io/) 
+- [pymangle](https://github.com/esheldon/pymangle)
+
+**tl;dr** Run the following lines after activating the conda environment 
+```
+conda install -c bccp nbodykit
+pip install pymangle
+```
 
 
 ## Generating an HOD catalog for HR Quijote LHC 
@@ -56,14 +91,4 @@ theta_hod = Galaxies.thetahod_lowz_ngc()
 # apply HOD 
 gals = Galaxies.hodGalaxies(halos, theta_hod, seed=0) 
 print(np.array(gals['Position']))
-```
-
-## some tips for running on tiger
-
-```bash
-# load anaconda 
-module load anaconda3
-
-# create conda environment 
-conda create -n name_of_your_env python=3.7 
 ```
