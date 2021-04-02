@@ -6,7 +6,8 @@ mksample
 
 
 '''
-import os, time 
+import os, time
+import h5py
 import numpy as np 
 from .remap import Cuboid 
 import nbodykit.lab as NBlab
@@ -86,11 +87,8 @@ def BOSS(galaxies, sample='lowz-south', seed=0, veto=True, fiber_collision=True,
 
     galaxies = galaxies[select & ~fibcoll]
     
-    if sample == 'lowz-south': # fraction of the sky 
-        # 2.501263E+03 deg^2
-        fsky = (2.501263e3) / (360.**2 / np.pi)
-    else: 
-        raise NotImplementedError
+    area = BOSS_area(sample=sample, veto=veto)
+    fsky = area / (360.**2 / np.pi)
     if not silent: print("..footprint covers %.3f of sky" % fsky)
     galaxies.attrs['fsky'] = fsky 
     return galaxies
@@ -192,7 +190,18 @@ def BOSS_radial(z, sample='lowz-south', seed=0):
 
 
 def BOSS_area(sample='lowz-south', veto=True): 
-    ''' get footprint area of BOSS sample
+    ''' get footprint area of BOSS sample. Currently everything is hardcoded
+
+
+    Returns
+    -------
+    footprint of boss sample in sq. degrees
+
+
+    Notes
+    -----
+    * veto fraction is hardcoded using values from https://data.sdss.org/sas/dr12/boss/lss/mksampleDR12/nbarutils.py
+
     '''
     if sample == 'lowz-south': 
         f_poly = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
@@ -201,10 +210,11 @@ def BOSS_area(sample='lowz-south', veto=True):
         raise NotImplementedError
     boss_poly = pymangle.Mangle(f_poly) 
 
-    area = boss_poly.area # deg^2
+    area = np.sum(boss_poly.areas * boss_poly.weights) # deg^2
     
     if veto: # remove veto mask areas 
-        raise ValueError("doesn't work yet!")
+        fveto = 0.5*(0.906614+0.906454) # from https://data.sdss.org/sas/dr12/boss/lss/mksampleDR12/nbarutils.py
+        '''
         fvetos = [
                 'badfield_mask_postprocess_pixs8.ply', 
                 'badfield_mask_unphot_seeing_extinction_pixs8_dr12.ply',
@@ -215,6 +225,8 @@ def BOSS_area(sample='lowz-south', veto=True):
         for fveto in fvetos: 
             veto = pymangle.Mangle(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dat', fveto))
             area -= veto.area 
+        '''
+        area *= fveto 
     return area 
 
 
@@ -234,6 +246,7 @@ def BOSS_randoms(boss_gals, sample='lowz-south', veto=True):
     Returns
     -------
     nbodykit.ArrayCatalog with RA, DEC, and Z of random catalog
+
     '''
     from astropy.stats import scott_bin_width
     if sample not in ['lowz-south']: 
@@ -251,9 +264,10 @@ def BOSS_randoms(boss_gals, sample='lowz-south', veto=True):
     rand_ra     = rand['ra'][...]
     rand_dec    = rand['dec'][...]
 
-    # generate redshifts that match input galaxy redshift distribution
-    w, bins = scott_bin_width(boss_gals['Z'], return_bins=True)
-    hist, edges = np.histogram(boss_gals['Z'], bins=bins) 
+    # generate redshifts that match input galaxy redshift distribution. This 
+    # implementation is similiar to the implementation in nbodykit 
+    w, bins = scott_bin_width(np.array(boss_gals['Z']), return_bins=True)
+    hist, edges = np.histogram(np.array(boss_gals['Z']), bins=bins) 
     cutoffs = np.cumsum(hist) / np.sum(hist)
 
     prng = np.random.uniform(size=len(rand_ra))
