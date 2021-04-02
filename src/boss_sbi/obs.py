@@ -5,22 +5,96 @@ different methods for measuring observables here.
 
 
 '''
-from pyspectrum import pyspectrum as pySpec
-
+import numpy as np
+from . import util as UT 
+# --- nbodykit --- 
+import nbodykit.lab as nblab 
 from nbodykit.algorithms.fftpower import FFTPower
 from nbodykit.source.mesh.field import FieldMesh
-from skewspec import smoothing
-from skewspec.skew_spectrum import SkewSpectrum
 
-############################################################
-# These are Pylians3 functions -> are we going to use them?
-import Pk_library as PKL
-import MAS_library as MASL
-import smoothing_library as SL
-############################################################
 
-def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
-    ''' Measure the powerspectrum multipoles using the nbodykit package
+def Plk_survey(galaxies, randoms, Ngrid=360, dk=0.005, P0=1e4, silent=True):
+    ''' Measure galaxy powerspectrum multipoles for a survey geometry using the
+    `nbodykit`. This function uses the FKP estmiator for calculating the power 
+    spectrum.
+   
+
+    Parameters
+    ----------
+    galaxies : GalaxyCatalog object
+
+    randoms : nbodykit.ArrayCatalog object 
+
+    Ngrid : int
+        grid size for FFT 
+
+    P0 : float 
+        P0 value for FKP weights. (default: 1e4) 
+
+    silent : boolean
+        If True, the function will print out a bunch of stuff for sanity checks.
+
+    
+    Return
+    ------
+    k, p0k, p2k, p4k
+        The power spectrum monopole, quadrupole, and hexadecapole 
+
+    Notes
+    -----
+    * 04/02/2021: implemented but not yet tested
+    '''
+    # get nbar(z) for the galaxy and random samples
+    nbar_g = UT.get_nofz(np.array(galaxies['Z']), galaxies.attrs['fsky'], cosmo=galaxies.cosmo)
+    nbar_r = UT.get_nofz(np.array(randoms['Z']), galaxies.attrs['fsky'], cosmo=galaxies.cosmo)
+
+    # calculate xyz positions
+    pos_g = nblab.transform.SkyToCartesian(
+            galaxies['RA'], galaxies['DEC'], galaxies['Z'], cosmo=galaxies.cosmo) 
+    pos_r = nblab.transform.SkyToCartesian( 
+            randoms['RA'], randoms['DEC'], randoms['Z'], cosmo=galaxies.cosmo) 
+
+    Ng = pos_g.shape[0] # number of galaxies 
+    Nr = pos_r.shape[0] # number of randoms
+
+    # normalize nbar(z) for randoms 
+    nbar_r *= Ng/Nr
+    
+    # weights 
+    w_g = np.ones(Ng) 
+    w_r = np.ones(Nr) 
+
+    _gals = nblab.ArrayCatalog({
+        'Position': pos_g, 
+        'NZ': nbar_g, 
+        'WEIGHT': w_g, 
+        'WEIGHT_FKP': 1./(1.+nbar_g * P0)
+        })
+
+    _rands = nblab.ArrayCatalog({ 
+        'Position': pos_r, 
+        'NZ': nbar_r,
+        'WEIGHT': w_r,
+        'WEIGHT_FKP': 1./(1. + nbar_r * P0)
+    })
+
+    fkp = nblab.FKPCatalog(_gals, _rands)
+    mesh = fkp.to_mesh(Nmesh=Ngrid, nbar='NZ', fkp_weight='WEIGHT_FKP', comp_weight='WEIGHT', window='tsc')
+
+    # compute the multipoles
+    r = nblab.ConvolvedFFTPower(mesh, poles=[0,2,4], dk=dk, kmin=0.)
+    
+    k = r.poles['k'] 
+    p0k = r.poles['power_0'].real - r.attrs['shotnoise']
+    p2k = r.poles['power_2'].real 
+    p4k = r.poles['power_4'].real 
+
+    return k, p0k, p2k, p4k
+
+
+def Plk_box(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
+    ''' Measure galaxy powerspectrum multipoles for a galaxy sample in box using 
+    `nbodykit`.
    
 
     Parameters
@@ -33,7 +107,6 @@ def Plk(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
     pk_moms_arr: an array containing values of k and power spectrum moments
 
     '''
-
     dk = 2.0 * np.pi / boxsize * k_bin_width
     kmin = 2.0 * np.pi / boxsize / 2.0
 
@@ -80,23 +153,24 @@ def B0k(galaxies, Lbox=1000., Ngrid=360, step=3, Ncut=3, Nmax=40, fft='pyfftw'):
     bisp : dictionary
 
     '''
+    from pyspectrum import pyspectrum as pySpec
     bisp = pySpec.Bk_periodic(galaxies, Lbox=Lbox, Ngrid=Ngrid, step=step,
             Ncut=Ncut, Nmax=Nmax, fft='pyfftw')
     return bisp 
 
 
+"""
+from skewspec import smoothing
+from skewspec.skew_spectrum import SkewSpectrum
 
-def func_mark(weight,delta_s,p):
-    
-    '''Functional form for the mark
-    '''
-    
-    mark_m = ((delta_s+1.)/(delta_s+1.+weight+1e-6))**p
-    return mark_m
-
+############################################################
+# These are Pylians3 functions -> are we going to use them?
+import Pk_library as PKL
+import MAS_library as MASL
+import smoothing_library as SL
+############################################################
 
 def Mk(galaxy_pos, Filter, R, p, ds, BoxSize, grid, MAS, threads):
-    
     ''' Measure the marked spectrum using the `Pylians3` package  
     Input:
         galaxy_pos: (N,3) array
@@ -130,7 +204,7 @@ def Mk(galaxy_pos, Filter, R, p, ds, BoxSize, grid, MAS, threads):
     MASL.MA(galaxy_pos,delta_m,BoxSize,MAS,W=mark)
     delta_m /= np.mean(delta_m,dtype=np.float32);  delta_m -= 1.0
     # compute marked Pk                                                                                                 
-    Pk = PKL.Pk(delta_m, BoxSize, axis, MAS, threads)
+    Pk = PKL.Pk(delta_m, BoxSize, axis, MAS, threads
     return Pk
 
 
@@ -183,5 +257,14 @@ def Pk_skew(galaxies, Lbox=1000., Ngrid=360, Rsmooth):
             SkewSpec_arr['k'] = skew_spec.Pskew['default_key'].poles['k']
             for skew_spec in skew_spectra:
                 SkewSpec_arr[skew_spec.name] = skew_spec.Pskew['default_key'].poles['power_%d'%ell].real
+    return SkewSpec_arr
 
-   return SkewSpec_arr
+
+def func_mark(weight,delta_s,p):
+    
+    '''Functional form for the mark
+    '''
+    
+    mark_m = ((delta_s+1.)/(delta_s+1.+weight+1e-6))**p
+    return mark_m
+"""
