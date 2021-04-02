@@ -5,6 +5,7 @@ module with some utility functions
 
 
 '''
+import numpy as np 
 from astropy.stats import scott_bin_width
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -12,6 +13,24 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 def get_nofz(z, fsky, cosmo=None): 
     ''' calculate nbar(z) given redshift values and f_sky (sky coverage
     fraction)
+
+    Parameters
+    ----------
+    z : array like
+        array of redshift values 
+    fsky : float 
+        sky coverage fraction  
+    cosmo : cosmology object 
+        cosmology to calculate comoving volume of redshift bins 
+
+    Returns
+    -------
+    number density at input redshifts: nbar(z) 
+
+    Notes
+    -----
+    * based on nbdoykit implementation 
+
     '''
     # calculate nbar(z) for each galaxy 
     _, edges = scott_bin_width(z, return_bins=True)
