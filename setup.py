@@ -9,9 +9,9 @@ __version__ = '0.1'
 
 # PROJECT SPECIFIC
 
-NAME = "boss_sbi"
+NAME = "simbig"
 PACKAGES = find_packages(where="src")
-META_PATH = os.path.join("src", "boss_sbi", "__init__.py")
+META_PATH = os.path.join("src", "simbig", "__init__.py")
 CLASSIFIERS = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Science/Research",
