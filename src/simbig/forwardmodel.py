@@ -127,8 +127,10 @@ def BOSS_veto(ra, dec):
             'bright_object_mask_rykoff_pix.ply', 
             'centerpost_mask_dr12.ply', 
             'collision_priority_mask_dr12.ply']
+
+    veto_dir = os.path.join(os.environ['QUIJOTE_DIR'], 'chang', 'simbig')
     for fveto in fvetos: 
-        veto = pymangle.Mangle(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dat', fveto))
+        veto = pymangle.Mangle(os.path.join(veto_dir, fveto))
         w_veto = veto.weight(ra, dec)
         in_veto = in_veto | (w_veto > 0.)
     return in_veto
@@ -281,3 +283,25 @@ def BOSS_randoms(boss_gals, sample='lowz-south', veto=True):
         raise NotImplementedError
         
     return NBlab.ArrayCatalog({'RA': rand_ra[in_radial_select], 'DEC': rand_dec[in_radial_select], 'Z': rand_z[in_radial_select]})
+
+
+def Box_RSD(cat, LOS=[0,0,1], Lbox=1000.):
+    ''' Given a halo/galaxy catalog in a periodic box, apply redshift space 
+    distortion specified LOS along LOS
+
+    Parameters
+    ----------
+    cat : CatalogBase
+        nbodykit.Catalog object
+    LOS : array_like 
+        3 element list specifying the direction of the line-of-sight
+    Lbox : float
+        box size in Mpc/h
+    '''
+    pos = np.array(cat['Position']) + np.array(cat['VelocityOffset']) * LOS
+
+    # impose periodic boundary conditions for particles outside the box
+    i_rsd = np.arange(3)[np.array(LOS).astype(bool)][0]
+    rsd_pos = pos[:,i_rsd] % Lbox
+    pos[:,i_rsd] = np.array(rsd_pos)
+    return pos

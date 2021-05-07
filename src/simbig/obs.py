@@ -98,10 +98,9 @@ def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, sil
     return k, p0k, p2k, p4k
 
 
-def Plk_box(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
+def Plk_box(galaxies, Lbox=1000., Ngrid=360, dk=0.005, LOS=[0,0,1]):
     ''' Measure galaxy powerspectrum multipoles for a galaxy sample in box using 
     `nbodykit`.
-   
 
     Parameters
     ----------
@@ -112,37 +111,26 @@ def Plk_box(galaxies, Lbox=1000., Ngrid=360, k_bin_width=1):
     ------
     pk_moms_arr: an array containing values of k and power spectrum moments
 
-    '''
-    dk = 2.0 * np.pi / boxsize * k_bin_width
-    kmin = 2.0 * np.pi / boxsize / 2.0
-
-    # Set line of sight direction
-    LOS = numpy.array([0,0,1])
     
+    Notes 
+    -----
+    * CHH: I modified the code a bit based on https://nbodykit.readthedocs.io/en/latest/cookbook/fftpower.html
+
+    '''
     # paint galaxies to mesh
-    delta_mesh = FieldMesh(galaxies.to_mesh(Nmesh=Ngrid, BoxSize=Lbox,
-        window='cic', interlaced=False, compensated=False).compute()-1)
+    mesh = galaxies.to_mesh(window='tsc', Nmesh=Ngrid, BoxSize=Lbox, 
+            compensated=True, position='Position')
 
     #compute the power spectrum moments using nbodykit 
-    if poles is None:
-      poles = [0,2,4]
-      pk_moms = FFTPower(first=delta_mesh,
-                          second=None,
-                          mode='2d',
-                          dk=dk,
-                          kmin=kmin,
-                          poles=poles,
-                          Nmu=5,
-                          los=LOS)
+    pk_moms = FFTPower(mesh, mode='2d', dk=dk, kmin=0., poles=[0,2,4], los=LOS)
+    
+    k = pk_moms.poles['k'] 
+    # apply shot noise correction 
+    p0k =  pk_moms.poles['power_0'].real - pk_moms.attrs['shotnoise']
+    p2k =  pk_moms.poles['power_2'].real
+    p4k =  pk_moms.poles['power_4'].real
 
-    # if we wanted to return an array of k and pkl values, we can return PkMoms_arr
-    for ell in pk_moms.attrs['poles']:
-            mydtype = [('k', 'f8'), ('P', 'f8')]
-            PkMoms_arr = np.empty(shape=pk_moms.poles['k'].shape, dtype=mydtype)
-            PkMoms_arr['k'] = pk_moms.poles['k']
-            PkMoms_arr['P'] = pk_moms.poles['power_%d'%ell].real
-            
-    return PkMoms_arr
+    return k, p0k, p2k, p4k 
 
 
 def B0k(galaxies, Lbox=1000., Ngrid=360, step=3, Ncut=3, Nmax=40, fft='pyfftw'): 

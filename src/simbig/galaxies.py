@@ -97,10 +97,7 @@ def BOSSGalaxies(sample='lowz-south'):
     data : nbodykit.lab.FITSCatalog object
         BOSS galaxy catalog  
     '''
-    if sample == 'cmass-north': 
-        fgal = os.path.join(os.environ('BOSSSBI_DIR'), 'boss',
-                'galaxy_DR12v5_CMASS_North.fits.gz') 
-    elif sample == 'lowz-south': 
+    if sample == 'lowz-south': 
         fgal = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), 'dat',
                 'galaxy_DR12v5_LOWZ_South.fits.gz')
