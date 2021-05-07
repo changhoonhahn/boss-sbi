@@ -7,10 +7,10 @@ script to test the power spectrum multipole calculation for survey geometry
 '''
 import os, time
 import numpy as np 
-from boss_sbi.halos import Quijote_LHC_HR
-from boss_sbi import galaxies as Galaxies
-from boss_sbi import forwardmodel as FM 
-from boss_sbi import obs as Obs 
+from simbig.halos import Quijote_LHC_HR
+from simbig import galaxies as Galaxies
+from simbig import forwardmodel as FM 
+from simbig import obs as Obs 
 # --- plotting --- 
 import matplotlib as mpl
 mpl.use('pdf')
