@@ -13,7 +13,7 @@ from nbodykit.algorithms.fftpower import FFTPower
 from nbodykit.source.mesh.field import FieldMesh
 
 
-def Plk_survey(galaxies, randoms, Ngrid=360, dk=0.005, P0=1e4, silent=True):
+def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, silent=True):
     ''' Measure galaxy powerspectrum multipoles for a survey geometry using the
     `nbodykit`. This function uses the FKP estmiator for calculating the power 
     spectrum.
@@ -24,6 +24,9 @@ def Plk_survey(galaxies, randoms, Ngrid=360, dk=0.005, P0=1e4, silent=True):
     galaxies : GalaxyCatalog object
 
     randoms : nbodykit.ArrayCatalog object 
+
+    weights : array_like, optional 
+        weights for the galaxies
 
     Ngrid : int
         grid size for FFT 
@@ -61,7 +64,10 @@ def Plk_survey(galaxies, randoms, Ngrid=360, dk=0.005, P0=1e4, silent=True):
     nbar_r *= Ng/Nr
     
     # weights 
-    w_g = np.ones(Ng) 
+    if weights is None: 
+        w_g = np.ones(Ng) 
+    else: 
+        w_g = weights
     w_r = np.ones(Nr) 
 
     _gals = nblab.ArrayCatalog({
