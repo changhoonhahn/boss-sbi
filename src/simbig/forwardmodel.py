@@ -232,7 +232,7 @@ def BOSS_area(sample='lowz-south', veto=True):
     return area 
 
 
-def BOSS_randoms(boss_gals, sample='lowz-south', veto=True): 
+def BOSS_randoms(boss_gals, weights=None, sample='lowz-south', veto=True): 
     ''' given forward modeled galaxy catalog (output from the BOSS function) construct 
     accompanying random catalog. 
 
@@ -240,6 +240,8 @@ def BOSS_randoms(boss_gals, sample='lowz-south', veto=True):
     ----------
     boss_gals : catalog object
         catalog output from `forwardmodel.BOSS` function 
+    weights : array_like
+        corresponding weights for the galaxy catalog
     sample : string
         specify which BOSS sample. currently only supports 'lowz-south'
     veto : boolean
@@ -269,7 +271,7 @@ def BOSS_randoms(boss_gals, sample='lowz-south', veto=True):
     # generate redshifts that match input galaxy redshift distribution. This 
     # implementation is similiar to the implementation in nbodykit 
     w, bins = scott_bin_width(np.array(boss_gals['Z']), return_bins=True)
-    hist, edges = np.histogram(np.array(boss_gals['Z']), bins=bins) 
+    hist, edges = np.histogram(np.array(boss_gals['Z']), bins=bins, weights=weights) 
     cutoffs = np.cumsum(hist) / np.sum(hist)
 
     prng = np.random.uniform(size=len(rand_ra))
