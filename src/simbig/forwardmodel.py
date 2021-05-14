@@ -32,15 +32,23 @@ def BOSS(galaxies, sample='lowz-south', seed=0, veto=True, fiber_collision=True,
         xyz_t[i,:] = C.Transform(xyz[i,0], xyz[i,1], xyz[i,2]) # transformed
     xyz_t *= 1000. 
     
-    # rotate and translate BoxRemap-ed cuboid 
+    vxyz = np.array(galaxies['Velocity'])
+    vxyz_t = np.empty(vxyz.shape) 
+    for i in range(vxyz.shape[0]): 
+        vxyz_t[i,:] = C.TransformVelocity(vxyz[i,0], vxyz[i,1], vxyz[i,2]) # transformed
+    
+    # rotate BoxRemap-ed cuboid 
     xyz_t = np.dot(xyz_t, np.array([[0, -1, 0], [1, 0, 0,], [0, 0, 1]])) # rotate
+    vxyz_t = np.dot(vxyz_t, np.array([[0, -1, 0], [1, 0, 0,], [0, 0, 1]])) # rotate
+
+    # translate 
     xyz_t += np.array([334.45, 738.4, -351.1])[None,:] # translate 
     
     # transform Cartesian to (RA, Dec, z) 
     ra, dec, z = NBlab.transform.CartesianToSky(
             xyz_t, 
             galaxies.cosmo,
-            velocity=galaxies['Velocity'], 
+            velocity=vxyz_t, 
             observer=[0,0,0])
     galaxies['RA']  = ra
     galaxies['DEC'] = dec 
