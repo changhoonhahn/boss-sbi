@@ -59,9 +59,6 @@ def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, sil
 
     Ng = pos_g.shape[0] # number of galaxies 
     Nr = pos_r.shape[0] # number of randoms
-
-    # normalize nbar(z) for randoms 
-    nbar_r *= Ng/Nr
     
     # weights 
     if weights is None: 
@@ -69,6 +66,9 @@ def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, sil
     else: 
         w_g = weights
     w_r = np.ones(Nr) 
+
+    # normalize nbar(z) for randoms 
+    nbar_r *= np.sum(w_g)/Nr
 
     _gals = nblab.ArrayCatalog({
         'Position': pos_g, 
