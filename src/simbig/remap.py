@@ -222,6 +222,10 @@ class Cuboid:
         x2 = fmod(p[1], 1) + (p[1] < 0)
         x3 = fmod(p[2], 1) + (p[2] < 0)
         return vec3(x1, x2, x3)
+    
+    def TransformVelocity(self, vx, vy, vz):
+        v = vec3(vx,vy,vz)
+        return (dot(v, self.n1), dot(v, self.n2), dot(v, self.n3))
 
 
 def abort(msg=None, code=1):
