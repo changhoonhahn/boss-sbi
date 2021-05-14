@@ -64,10 +64,10 @@ def Halos(halo_folder, z=0.5, Om=None, Ob=None, h=None, ns=None, s8=None, Mnu=0.
     group_data = {}  
     group_data['Length']    = Fof.GroupLen
     group_data['Position']  = Fof.GroupPos/1e3
-    group_data['Velocity']  = Fof.GroupVel
+    group_data['Velocity']  = Fof.GroupVel * (1 + z) # km/s
     group_data['Mass']      = Fof.GroupMass*1e10
     # calculate velocity offset
-    rsd_factor = (1.+z) / Hz
+    rsd_factor = (1. + z) / Hz
     group_data['VelocityOffset'] = group_data['Velocity'] * rsd_factor
     # save to ArryCatalog for consistency
     cat = NBlab.ArrayCatalog(group_data, BoxSize=np.array([1000., 1000., 1000.])) 
