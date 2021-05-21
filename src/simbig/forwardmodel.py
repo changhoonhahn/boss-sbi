@@ -16,9 +16,10 @@ import pymangle
 from pydl.pydlutils.spheregroup import spherematch
 
 
-def BOSS(galaxies, sample='lowz-south', seed=0, veto=True, fiber_collision=True, silent=True):
+def BOSS(_galaxies, sample='lowz-south', seed=0, veto=True, fiber_collision=True, silent=True):
     ''' Forward model the BOSS survey given a simulated galaxy catalog 
     '''
+    galaxies = _galaxies.copy()
     assert sample == 'lowz-south', 'only LOWZ SGC has been implemented' 
     assert np.all(galaxies.attrs['BoxSize'] == 1000.), 'only supported for 1Gpc/h cubic box'
 
@@ -223,7 +224,9 @@ def BOSS_area(sample='lowz-south', veto=True):
     area = np.sum(boss_poly.areas * boss_poly.weights) # deg^2
     
     if veto: # remove veto mask areas 
-        fveto = 0.5*(0.906614+0.906454) # from https://data.sdss.org/sas/dr12/boss/lss/mksampleDR12/nbarutils.py
+        fveto = 0.9012 # estimated from mangle ransack 
+
+        #fveto = 0.5*(0.906614+0.906454) # from https://data.sdss.org/sas/dr12/boss/lss/mksampleDR12/nbarutils.py
         '''
         fvetos = [
                 'badfield_mask_postprocess_pixs8.ply', 
@@ -240,7 +243,7 @@ def BOSS_area(sample='lowz-south', veto=True):
     return area 
 
 
-def BOSS_randoms(boss_gals, weights=None, sample='lowz-south', veto=True): 
+def BOSS_randoms(boss_gals, weights=None, sample='lowz-south', veto=False): 
     ''' given forward modeled galaxy catalog (output from the BOSS function) construct 
     accompanying random catalog. 
 
