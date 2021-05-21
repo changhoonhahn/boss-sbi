@@ -45,20 +45,11 @@ def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, sil
 
     Notes
     -----
+    * 05/21/2021: tested; nbar(z) calculation modified
     * 04/02/2021: implemented but not yet tested
     '''
-    # get nbar(z) for the galaxy and random samples
-    nbar_g = UT.get_nofz(np.array(galaxies['Z']), galaxies.attrs['fsky'], cosmo=galaxies.cosmo)
-    nbar_r = UT.get_nofz(np.array(randoms['Z']), galaxies.attrs['fsky'], cosmo=galaxies.cosmo)
-
-    # calculate xyz positions
-    pos_g = nblab.transform.SkyToCartesian(
-            galaxies['RA'], galaxies['DEC'], galaxies['Z'], cosmo=galaxies.cosmo) 
-    pos_r = nblab.transform.SkyToCartesian( 
-            randoms['RA'], randoms['DEC'], randoms['Z'], cosmo=galaxies.cosmo) 
-
-    Ng = pos_g.shape[0] # number of galaxies 
-    Nr = pos_r.shape[0] # number of randoms
+    Ng = len(galaxies) # number of galaxies 
+    Nr = len(randoms) # number of randoms
     
     # weights 
     if weights is None: 
@@ -67,14 +58,25 @@ def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, sil
         w_g = weights
     w_r = np.ones(Nr) 
 
-    # normalize nbar(z) for randoms 
-    nbar_r *= np.sum(w_g)/Nr
+    alpha = np.sum(w_g)/Nr
+    if not silent: print('alpha = %f' % alpha) 
 
+    # get nbar(z) for the galaxy and random samples
+    ng_of_z = UT.get_nofz(np.array(galaxies['Z']), galaxies.attrs['fsky'], cosmo=galaxies.cosmo)
+    nbar_g = ng_of_z(np.array(galaxies['Z']))
+    nbar_r = ng_of_z(np.array(randoms['Z']))
+
+    # calculate xyz positions
+    pos_g = nblab.transform.SkyToCartesian(
+            galaxies['RA'], galaxies['DEC'], galaxies['Z'], cosmo=galaxies.cosmo) 
+    pos_r = nblab.transform.SkyToCartesian( 
+            randoms['RA'], randoms['DEC'], randoms['Z'], cosmo=galaxies.cosmo) 
+    
     _gals = nblab.ArrayCatalog({
         'Position': pos_g, 
         'NZ': nbar_g, 
         'WEIGHT': w_g, 
-        'WEIGHT_FKP': 1./(1.+nbar_g * P0)
+        'WEIGHT_FKP': 1./(1. + nbar_g * P0)
         })
 
     _rands = nblab.ArrayCatalog({ 
@@ -94,6 +96,8 @@ def Plk_survey(galaxies, randoms, weights=None, Ngrid=360, dk=0.005, P0=1e4, sil
     p0k = r.poles['power_0'].real - r.attrs['shotnoise']
     p2k = r.poles['power_2'].real 
     p4k = r.poles['power_4'].real 
+    if not silent: 
+        for key in r.attrs: print("   %s = %s" % (key, str(r.attrs[key])))
 
     return k, p0k, p2k, p4k
 
