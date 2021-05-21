@@ -45,4 +45,4 @@ def get_nofz(z, fsky, cosmo=None):
 
     nofz = InterpolatedUnivariateSpline(0.5*(edges[1:] + edges[:-1]), N/dV, ext='const')
     
-    return nofz(z) 
+    return nofz
