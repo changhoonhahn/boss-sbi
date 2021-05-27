@@ -60,6 +60,17 @@ Later, if you want to exist the conda environemtn
 conda deactivate 
 ```
 
+### `pySpectrum` installation
+If you're interested in calculating the bispectrum, you'll have to install [`pySpectrum`](https://github.com/changhoonhahn/pySpectrum). 
+More specifically, you'll have to install the `survey` branch of `pySpectrum`, which includes the latest
+updates (this will be merged into main branch soon).
+
+To install `pySpectrum`, activate your conda environment and run: 
+```bash
+git clone --single-branch --branch survey https://github.com/changhoonhahn/pySpectrum.git
+cd pySpectrum
+pip install -e . 
+```
 
 ### Dependencies
 The `simbig` package requires the following python pacakges: 
